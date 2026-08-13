@@ -19,4 +19,20 @@ describe("part golden queries", () => {
 
     expect(result.parts.map((part) => part.partNumber)).toContain("177037");
   });
+
+  it.skipIf(!catalogDatabaseUrl)("matches every query term separately instead of the whole phrase", async () => {
+    const pool = new Pool({ connectionString: catalogDatabaseUrl });
+    const repository = new SqlCatalogRepository(pool);
+
+    // "Kit 365mm (P/ Tubo Guia)" — the terms are in the description but never adjacent.
+    const result = await repository.searchParts({
+      catalogId: "eaton",
+      query: "kit tubo guia",
+      applicationId: "16049",
+      limit: 5
+    });
+    await pool.end();
+
+    expect(result.parts.map((part) => part.partNumber)).toContain("104109-8");
+  });
 });

@@ -14,18 +14,26 @@ export class SqlCatalogRepository implements CatalogReadRepository {
         AND (
           p.part_number ILIKE $2
           OR p.part_number_normalized = $3
-          OR p.description ILIKE $2
+          OR p.description ILIKE ALL($4::text[])
         )
-        AND ($4::text IS NULL OR EXISTS (
+        AND ($5::text IS NULL OR EXISTS (
           SELECT 1 FROM part_application pa
           WHERE pa.catalog_id = p.catalog_id
             AND pa.part_id = p.part_id
-            AND pa.application_id = $4
+            AND pa.application_id = $5
         ))
-        AND ($5::text IS NULL OR p.group_id = $5 OR p.subgroup_id = $5)
+        AND ($6::text IS NULL OR p.group_id = $6 OR p.subgroup_id = $6)
       ORDER BY p.is_obsolete ASC, p.part_number
-      LIMIT $6
-    `, [input.catalogId, `%${input.query}%`, normalizeNumber(input.query), input.applicationId ?? null, input.groupId ?? null, input.limit]);
+      LIMIT $7
+    `, [
+      input.catalogId,
+      `%${input.query}%`,
+      normalizeNumber(input.query),
+      toDescriptionPatterns(input.query),
+      input.applicationId ?? null,
+      input.groupId ?? null,
+      input.limit
+    ]);
     const parts = result.rows.map(mapPart);
     return { parts, total: parts.length };
   }
@@ -179,7 +187,11 @@ export class SqlCatalogRepository implements CatalogReadRepository {
 
   private async findVehicleCandidates(input: { catalogId: string; model: string; manufacturerId?: string; manufacturer?: string; year?: number; limit: number }, applyYear: boolean): Promise<VehicleApplication[]> {
     const result = await this.db.query(`
-      SELECT va.*
+      SELECT va.*, (
+        SELECT count(*)
+        FROM part_application pa
+        WHERE pa.catalog_id = va.catalog_id AND pa.application_id = va.application_id
+      ) AS part_count
       FROM vehicle_application va
       LEFT JOIN manufacturer m ON m.catalog_id = va.catalog_id AND m.manufacturer_id = va.manufacturer_id
       WHERE va.catalog_id = $1
@@ -190,7 +202,7 @@ export class SqlCatalogRepository implements CatalogReadRepository {
           $6::boolean = FALSE OR $7::int IS NULL OR
           ((va.year_from IS NULL OR $7 >= va.year_from) AND (va.year_to IS NULL OR $7 <= va.year_to))
         )
-      ORDER BY va.description
+      ORDER BY part_count DESC, va.description
       LIMIT $8
     `, [
       input.catalogId,
@@ -245,4 +257,10 @@ function withAssemblyFields(part: Part, row: Row): Part & { quantity?: number; d
 
 function normalizeNumber(value: string): string {
   return value.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+}
+
+/** One pattern per query term: a description matches only when it contains all of them, in any order. */
+function toDescriptionPatterns(query: string): string[] {
+  const terms = query.split(/\s+/).filter((term) => term.length > 0);
+  return terms.length > 0 ? terms.map((term) => `%${term}%`) : [`%${query}%`];
 }

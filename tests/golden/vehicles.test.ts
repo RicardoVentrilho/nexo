@@ -34,4 +34,19 @@ describe("vehicle golden queries", () => {
     expect(result.widened).toBe(true);
     expect(result.candidates.length).toBeGreaterThan(0);
   });
+
+  it.skipIf(!catalogDatabaseUrl)("offers the applications that actually carry parts, not the alphabetically first", async () => {
+    const pool = new Pool({ connectionString: catalogDatabaseUrl });
+    const repository = new SqlCatalogRepository(pool);
+
+    // 48 applications match "Cargo 2422"; 16049 is the one with 18 parts linked.
+    const result = await repository.resolveVehicle({
+      catalogId: "eaton",
+      model: "Cargo 2422",
+      limit: 5
+    });
+    await pool.end();
+
+    expect(result.candidates.map((candidate) => candidate.applicationId)).toContain("16049");
+  });
 });

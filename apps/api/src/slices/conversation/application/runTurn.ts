@@ -6,6 +6,7 @@ import type {
   ChatCompletionTool
 } from "openai/resources/chat/completions";
 import { GroundingLedger } from "../domain/ledger.js";
+import { extractPartQuery } from "../domain/partQuery.js";
 import type { McpClient } from "../infrastructure/mcpClient.js";
 import { createOpenAiClient, getOpenAiModel } from "../infrastructure/openAiClient.js";
 import type { SessionState } from "../infrastructure/sessionStore.js";
@@ -288,16 +289,6 @@ function parseMaybeObject(value: unknown): Record<string, unknown> | undefined {
 
 function fallbackProse(cardCount: number): string {
   return cardCount > 0 ? "Veja os cards encontrados: [[card:1]]" : "Nao encontrei uma peca correspondente no catalogo.";
-}
-
-function extractPartQuery(query: string): string {
-  const words = query
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .split(/\s+/)
-    .filter((word) => !/^\d+$/.test(word))
-    .filter((word) => !["cargo", "caminhao", "caminhoes", "ford", "volkswagen", "mercedes", "benz", "volvo", "iveco", "scania"].includes(word.toLowerCase()));
-  return words.join(" ").trim() || query;
 }
 
 function choiceProse(cardCount: number): string {
