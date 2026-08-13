@@ -27,6 +27,7 @@ export function toVehicleCandidate(candidate: VehicleApplication) {
     description: candidate.description,
     year_text: candidate.yearText,
     year_from: candidate.yearFrom,
-    year_to: candidate.yearTo
+    year_to: candidate.yearTo,
+    part_count: candidate.partCount
   };
 }

@@ -2,17 +2,26 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
 
-**Active feature**: `specs/001-authenticated-chat-platform/`
+**Active feature**: `specs/002-slot-driven-funnel/`
+
+- [plan.md](specs/002-slot-driven-funnel/plan.md) — approach, Constitution Check, structure
+- [spec.md](specs/002-slot-driven-funnel/spec.md) — FR-101…FR-117, SC-101…SC-107
+- [research.md](specs/002-slot-driven-funnel/research.md) — why a state machine and not a framework; the measurements
+- [data-model.md](specs/002-slot-driven-funnel/data-model.md) — conversation state (slots, candidates, discriminator)
+- [contracts/](specs/002-slot-driven-funnel/contracts/) — deltas to the 001 web↔API and MCP contracts
+- [quickstart.md](specs/002-slot-driven-funnel/quickstart.md) — validation per success criterion
+
+**Platform baseline**: `specs/001-authenticated-chat-platform/`
 
 - [plan.md](specs/001-authenticated-chat-platform/plan.md) — stack, structure, Constitution Check
-- [spec.md](specs/001-authenticated-chat-platform/spec.md) — FR-001…FR-028, SC-001…SC-012
+- [spec.md](specs/001-authenticated-chat-platform/spec.md) — FR-001…FR-031, SC-001…SC-012
 - [research.md](specs/001-authenticated-chat-platform/research.md) — decisions and why
 - [data-model.md](specs/001-authenticated-chat-platform/data-model.md) — canonical catalog schema
 - [data-migration.md](specs/001-authenticated-chat-platform/data-migration.md) — Eaton → canonical mapping, measured against the real database
 - [contracts/](specs/001-authenticated-chat-platform/contracts/) — MCP tools, web ↔ API
 - [quickstart.md](specs/001-authenticated-chat-platform/quickstart.md) — bring-up and validation
 
-Governance: [.specify/memory/constitution.md](.specify/memory/constitution.md) (v1.3.0).
+Governance: [.specify/memory/constitution.md](.specify/memory/constitution.md) (v1.3.1).
 
 Three rules that override any convenient shortcut:
 

@@ -1,6 +1,6 @@
 import type { Card, Notice } from "@nexo/contracts/api";
 
-const CATALOG_IDENTIFIER = /\b[A-Z]{1,4}-?\d{2,}(?:-?\d+)*\b/g;
+const CATALOG_IDENTIFIER = /\b(?:[A-Z]{1,4}-?\d{2,}(?:-?\d+)*|\d{5,})\b/g;
 const CARD_REFERENCE = /\[\[card:\d+\]\]/g;
 const IDENTIFIER_KEYS = new Set([
   "application_id",

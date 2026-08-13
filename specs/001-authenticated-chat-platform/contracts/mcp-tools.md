@@ -1,5 +1,10 @@
 # Contract — MCP Catalog Tools
 
+> **Amended by feature 002**: the current catalog contract adds `part_count` to
+> `resolve_vehicle` candidates and makes `search_parts` term-wise and group-aware. Read this
+> baseline together with
+> [002/contracts/mcp-tools-delta.md](../../002-slot-driven-funnel/contracts/mcp-tools-delta.md).
+
 **Consumer**: `apps/api` (the agent loop) — the only caller. **Provider**: `apps/mcp`.
 **Transport**: MCP over the internal network. Not reachable from the browser (FR-004).
 **Schemas**: zod, in `packages/contracts/src/tools/`, imported by both sides so the contract has

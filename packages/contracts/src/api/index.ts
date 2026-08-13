@@ -15,8 +15,26 @@ export const Card = z.object({
 });
 
 export const Notice = z.object({
-  code: z.enum(["year_widened", "no_results", "catalog_unavailable", "truncated", "grounding_violation", "unauthenticated"]),
+  code: z.enum([
+    "year_widened",
+    "no_results",
+    "catalog_unavailable",
+    "truncated",
+    "grounding_violation",
+    "unauthenticated",
+    "question_skipped",
+    "vehicle_ambiguous"
+  ]),
   message: z.string()
+});
+
+export const Question = z.object({
+  attribute: z.string(),
+  options: z.array(z.object({
+    value: z.string(),
+    label: z.string()
+  })),
+  skippable: z.boolean()
 });
 
 export const TurnResponse = z.object({
@@ -24,7 +42,23 @@ export const TurnResponse = z.object({
   prose: z.string(),
   cards: z.array(Card),
   notices: z.array(Notice),
-  state: z.enum(["released", "needs_choice"])
+  state: z.enum(["released", "needs_choice", "needs_input"]),
+  question: Question.optional()
+}).superRefine((response, ctx) => {
+  if (response.state === "needs_input" && !response.question) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["question"],
+      message: "question is required when state is needs_input"
+    });
+  }
+  if (response.state !== "needs_input" && response.question) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["question"],
+      message: "question is only allowed when state is needs_input"
+    });
+  }
 });
 
 export const SessionInfo = z.object({
@@ -36,5 +70,6 @@ export const SessionInfo = z.object({
 export type TurnRequest = z.infer<typeof TurnRequest>;
 export type Card = z.infer<typeof Card>;
 export type Notice = z.infer<typeof Notice>;
+export type Question = z.infer<typeof Question>;
 export type TurnResponse = z.infer<typeof TurnResponse>;
 export type SessionInfo = z.infer<typeof SessionInfo>;

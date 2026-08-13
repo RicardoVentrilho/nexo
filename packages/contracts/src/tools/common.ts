@@ -9,7 +9,8 @@ export const VehicleCandidate = z.object({
   manufacturer_name: z.string().optional(),
   year_text: z.string().nullable().optional(),
   year_from: z.number().int().nullable().optional(),
-  year_to: z.number().int().nullable().optional()
+  year_to: z.number().int().nullable().optional(),
+  part_count: z.number().int().nonnegative()
 });
 
 export const PartResult = z.object({

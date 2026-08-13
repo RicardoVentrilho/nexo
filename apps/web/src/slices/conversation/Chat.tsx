@@ -1,8 +1,8 @@
 "use client";
 
-import { LogIn, Send } from "lucide-react";
+import { Check, LogIn, Send, SkipForward } from "lucide-react";
 import { useState } from "react";
-import type { Card as LedgerCard, TurnResponse } from "@nexo/contracts/api";
+import type { Card as LedgerCard, Question, TurnResponse } from "@nexo/contracts/api";
 import { Alert } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
@@ -66,6 +66,13 @@ export function Chat() {
               <>
                 <Prose text={item.response.prose} />
                 <Notices notices={item.response.notices} />
+                {item.response.state === "needs_input" && item.response.question ? (
+                  <QuestionPanel
+                    disabled={pending}
+                    onAnswer={(value) => void submit(value)}
+                    question={item.response.question}
+                  />
+                ) : null}
                 <div className="grid gap-3 md:grid-cols-2">
                   {item.response.cards.map((card) => renderCard(card, {
                     onVehicleSelect: (id) => submit(`usar aplicacao ${id}`),
@@ -92,6 +99,29 @@ export function Chat() {
         </Button>
       </form>
     </main>
+  );
+}
+
+function QuestionPanel({ disabled, onAnswer, question }: { disabled: boolean; onAnswer: (value: string) => void; question: Question }) {
+  return (
+    <section className="space-y-3 rounded-md border bg-background p-4" aria-label={question.attribute}>
+      {question.options.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {question.options.map((option) => (
+            <Button disabled={disabled} key={option.value} onClick={() => onAnswer(option.value)} type="button" variant="outline">
+              <Check className="mr-2 h-4 w-4" />
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      {question.skippable ? (
+        <Button disabled={disabled} onClick={() => onAnswer("nao sei")} type="button" variant="ghost">
+          <SkipForward className="mr-2 h-4 w-4" />
+          Nao sei
+        </Button>
+      ) : null}
+    </section>
   );
 }
 

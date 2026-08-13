@@ -47,6 +47,9 @@ describe("vehicle golden queries", () => {
     });
     await pool.end();
 
-    expect(result.candidates.map((candidate) => candidate.applicationId)).toContain("16049");
+    expect(result.candidates[0]).toMatchObject({
+      applicationId: "16049",
+      partCount: 18
+    });
   });
 });

@@ -1,5 +1,9 @@
 # Contract — Web ↔ Internal API
 
+> **Amended by feature 002**: the current conversation turn contract widens `state`, adds
+> `question`, `part_count`, and new notice codes. Read this baseline together with
+> [002/contracts/web-api-delta.md](../../002-slot-driven-funnel/contracts/web-api-delta.md).
+
 **Consumer**: `apps/web` (server side only — the browser never calls this directly).
 **Provider**: `apps/api`, internal ingress only (FR-004).
 **Auth**: every request carries the user's bearer token, validated against Keycloak's JWKS.

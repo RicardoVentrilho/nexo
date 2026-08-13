@@ -3,42 +3,36 @@ import { describe, expect, it } from "vitest";
 import { RunTurn } from "../../apps/api/src/slices/conversation/application/runTurn.js";
 import type { McpClient } from "../../apps/api/src/slices/conversation/infrastructure/mcpClient.js";
 import type { SessionState } from "../../apps/api/src/slices/conversation/infrastructure/sessionStore.js";
+import { createSlotSet } from "../../apps/api/src/slices/conversation/domain/slots.js";
 
 describe("RunTurn agent loop", () => {
-  it("lets OpenAI request MCP tools and turns tool results into grounded cards", async () => {
+  it("does not give OpenAI a tool list or let it choose MCP calls", async () => {
     const mcpCalls: Array<{ name: string; args: unknown }> = [];
     const mcpClient: McpClient = {
       async callTool(name, args) {
         mcpCalls.push({ name, args });
         return {
-          manufacturers: [
-            { manufacturer_id: "2", name: "FORD", application_count: 1972 },
-            { manufacturer_id: "4", name: "MERCEDES-BENZ", application_count: 1318 }
-          ]
+          candidates: [],
+          widened: false
         };
       }
     };
+    const openAiCalls: unknown[] = [];
     const openAi = fakeOpenAi([
-      {
-        content: null,
-        tool_calls: [{
-          id: "tool-1",
-          type: "function",
-          function: { name: "list_manufacturers", arguments: "{\"scope\":\"vehicle\",\"limit\":2}" }
-        }]
-      },
-      { content: "Escolha uma marca pelos cards: [[card:1]]" }
-    ]);
+      { content: "Nao encontrei uma aplicacao correspondente." }
+    ], openAiCalls);
 
-    const result = await new RunTurn(mcpClient, openAi, "test-model").execute(testSession(), "quais marcas voces tem?");
+    await new RunTurn(mcpClient, openAi, "test-model").execute(testSession(), "quais marcas voces tem?");
 
-    expect(mcpCalls).toEqual([{ name: "list_manufacturers", args: { scope: "vehicle", limit: 2 } }]);
-    expect(result.cards).toHaveLength(2);
-    expect(result.cards[0]?.kind).toBe("manufacturer");
-    expect(result.prose).toContain("[[card:1]]");
+    expect(mcpCalls.map((call) => call.name)).toEqual(["resolve_vehicle"]);
+    expect(openAiCalls).toHaveLength(2);
+    for (const call of openAiCalls) {
+      expect(call).not.toHaveProperty("tools");
+      expect(call).not.toHaveProperty("tool_choice");
+    }
   });
 
-  it("uses the pending user query when a vehicle application card is selected", async () => {
+  it("treats former selection commands as ordinary user text", async () => {
     const session = testSession();
     const mcpCalls: Array<{ name: string; args: unknown }> = [];
     const mcpClient: McpClient = {
@@ -69,28 +63,25 @@ describe("RunTurn agent loop", () => {
       }
     };
     const openAi = fakeOpenAi([
-      {
-        content: null,
-        tool_calls: [{
-          id: "tool-1",
-          type: "function",
-          function: { name: "resolve_vehicle", arguments: "{\"model\":\"Cargo 1723\",\"limit\":2}" }
-        }]
-      },
-      { content: "Aplicacoes disponiveis: 13657 e 24951." }
+      { content: "Escolha uma aplicacao pelos cards." },
+      { content: "Nao encontrei uma aplicacao correspondente." }
     ]);
     const runTurn = new RunTurn(mcpClient, openAi, "test-model");
 
     await runTurn.execute(session, "embreagem Cargo 1723");
     const selected = await runTurn.execute(session, "usar aplicacao 24951");
 
-    expect(session.pendingPartQuery).toBe("embreagem Cargo 1723");
-    expect(mcpCalls.at(-1)).toEqual({
-      name: "search_parts",
-      args: { query: "embreagem", application_id: "24951", limit: 5 }
+    expect(session.slotSet.slots.partTerm).toEqual({
+      value: "usar aplicacao 24951",
+      status: "stated",
+      source: "user_text"
     });
-    expect(selected.cards[0]?.kind).toBe("part");
-    expect(selected.prose).toContain("[[card:1]]");
+    expect(session.currentApplicationId).toBeUndefined();
+    expect(mcpCalls.at(-1)).toEqual({
+      name: "resolve_vehicle",
+      args: { catalog_id: "eaton", model: "usar aplicacao 24951", limit: 10 }
+    });
+    expect(selected.state).toBe("needs_choice");
   });
 });
 
@@ -98,16 +89,19 @@ function testSession(): SessionState {
   return {
     sessionId: "local",
     principal: { subject: "user-1", displayName: "User", roles: ["user"] },
+    slotSet: createSlotSet(),
     inFlight: false
   };
 }
 
-function fakeOpenAi(messages: Array<{ content: string | null; tool_calls?: unknown[] }>): OpenAI {
+function fakeOpenAi(messages: Array<{ content: string | null; tool_calls?: unknown[] }>, calls: unknown[] = []): OpenAI {
   let index = 0;
   return {
     chat: {
       completions: {
-        create: async () => ({
+        create: async (input: unknown) => {
+          calls.push(input);
+          return {
           choices: [{
             message: {
               role: "assistant",
@@ -115,7 +109,8 @@ function fakeOpenAi(messages: Array<{ content: string | null; tool_calls?: unkno
               tool_calls: messages[index++]?.tool_calls
             }
           }]
-        })
+        };
+        }
       }
     }
   } as unknown as OpenAI;

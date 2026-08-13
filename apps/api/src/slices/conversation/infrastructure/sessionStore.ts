@@ -1,14 +1,19 @@
 import type { Principal } from "../../identity/application/authoriseRequest.js";
+import type { Question } from "@nexo/contracts/api";
+import { createSlotSet, type SlotSet } from "../domain/slots.js";
 
 export interface SessionState {
   sessionId: string;
   principal: Principal;
-  currentManufacturerId?: string;
-  currentVehicleModel?: string;
+  slotSet: SlotSet;
   currentApplicationId?: string;
   currentPartId?: string;
-  pendingPartQuery?: string;
-  lastVehicleCandidates?: Array<{ application_id?: string; description?: string; year_text?: string | null }>;
+  awaitingQuestion?: Question;
+  pendingQuestionTelemetry?: {
+    attribute: string;
+    candidateCountBefore: number;
+  };
+  lastVehicleCandidates?: Array<{ application_id?: string; description?: string; year_text?: string | null; part_count?: number }>;
   inFlight: boolean;
 }
 
@@ -18,7 +23,7 @@ export class SessionStore {
   getOrCreate(sessionId: string, principal: Principal): SessionState {
     const existing = this.sessions.get(sessionId);
     if (existing) return existing;
-    const created: SessionState = { sessionId, principal, inFlight: false };
+    const created: SessionState = { sessionId, principal, slotSet: createSlotSet(), inFlight: false };
     this.sessions.set(sessionId, created);
     return created;
   }

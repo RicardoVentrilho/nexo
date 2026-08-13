@@ -6,6 +6,7 @@ export interface VehicleApplication {
   yearFrom: number | null;
   yearTo: number | null;
   yearText: string | null;
+  partCount: number;
 }
 
 export function applicationMatchesYear(application: VehicleApplication, year: number): boolean {

@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import type { CatalogReadRepository, Part, ProductGroup, VehicleApplication, Manufacturer, Asset } from "@nexo/catalog-core";
+import { toDescriptionPatterns, toSearchTerms } from "../slices/part-search/domain/termMatching.js";
 
 type Row = Record<string, unknown>;
 
@@ -8,13 +9,23 @@ export class SqlCatalogRepository implements CatalogReadRepository {
 
   async searchParts(input: { catalogId: string; query: string; applicationId?: string; groupId?: string; limit: number }): Promise<{ parts: Part[]; total: number }> {
     const result = await this.db.query(`
-      SELECT p.*
+      SELECT DISTINCT p.*
       FROM part p
+      LEFT JOIN product_group g ON g.catalog_id = p.catalog_id AND g.group_id = p.group_id
+      LEFT JOIN product_group sg ON sg.catalog_id = p.catalog_id AND sg.group_id = p.subgroup_id
+      LEFT JOIN product_group pg ON pg.catalog_id = sg.catalog_id AND pg.group_id = sg.parent_group_id
       WHERE p.catalog_id = $1
         AND (
           p.part_number ILIKE $2
           OR p.part_number_normalized = $3
-          OR p.description ILIKE ALL($4::text[])
+          OR unaccent(p.description) ILIKE ALL($4::text[])
+          OR EXISTS (
+            SELECT 1
+            FROM unnest($8::text[]) AS term(value)
+            WHERE unaccent(g.description) % unaccent(term.value)
+               OR unaccent(sg.description) % unaccent(term.value)
+               OR unaccent(pg.description) % unaccent(term.value)
+          )
         )
         AND ($5::text IS NULL OR EXISTS (
           SELECT 1 FROM part_application pa
@@ -32,7 +43,8 @@ export class SqlCatalogRepository implements CatalogReadRepository {
       toDescriptionPatterns(input.query),
       input.applicationId ?? null,
       input.groupId ?? null,
-      input.limit
+      input.limit,
+      toSearchTerms(input.query)
     ]);
     const parts = result.rows.map(mapPart);
     return { parts, total: parts.length };
@@ -243,7 +255,8 @@ function mapVehicleApplication(row: Row): VehicleApplication {
     description: String(row.description),
     yearFrom: row.year_from == null ? null : Number(row.year_from),
     yearTo: row.year_to == null ? null : Number(row.year_to),
-    yearText: row.year_text == null ? null : String(row.year_text)
+    yearText: row.year_text == null ? null : String(row.year_text),
+    partCount: Number(row.part_count)
   };
 }
 
@@ -257,10 +270,4 @@ function withAssemblyFields(part: Part, row: Row): Part & { quantity?: number; d
 
 function normalizeNumber(value: string): string {
   return value.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
-}
-
-/** One pattern per query term: a description matches only when it contains all of them, in any order. */
-function toDescriptionPatterns(query: string): string[] {
-  const terms = query.split(/\s+/).filter((term) => term.length > 0);
-  return terms.length > 0 ? terms.map((term) => `%${term}%`) : [`%${query}%`];
 }

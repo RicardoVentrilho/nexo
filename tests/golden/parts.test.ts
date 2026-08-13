@@ -35,4 +35,40 @@ describe("part golden queries", () => {
 
     expect(result.parts.map((part) => part.partNumber)).toContain("104109-8");
   });
+
+  it.skipIf(!catalogDatabaseUrl)("finds application parts when the term matches only the product group", async () => {
+    const pool = new Pool({ connectionString: catalogDatabaseUrl });
+    const repository = new SqlCatalogRepository(pool);
+
+    const result = await repository.searchParts({
+      catalogId: "eaton",
+      query: "embreagem",
+      applicationId: "16049",
+      limit: 25
+    });
+    await pool.end();
+
+    expect(result.parts).toHaveLength(18);
+    expect(result.parts.map((part) => part.partNumber)).toContain("104109-8");
+  });
+
+  it.skipIf(!catalogDatabaseUrl)("matches part terms accent-insensitively", async () => {
+    const pool = new Pool({ connectionString: catalogDatabaseUrl });
+    const repository = new SqlCatalogRepository(pool);
+
+    const withoutAccent = await repository.searchParts({
+      catalogId: "eaton",
+      query: "valvula",
+      limit: 10
+    });
+    const withAccent = await repository.searchParts({
+      catalogId: "eaton",
+      query: "válvula",
+      limit: 10
+    });
+    await pool.end();
+
+    expect(withAccent.parts.map((part) => part.partNumber)).toEqual(withoutAccent.parts.map((part) => part.partNumber));
+    expect(withAccent.parts.length).toBeGreaterThan(0);
+  });
 });
