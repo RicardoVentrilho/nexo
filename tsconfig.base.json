@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nexo/contracts": ["packages/contracts/src/index.ts"],
+      "@nexo/contracts/*": ["packages/contracts/src/*"],
+      "@nexo/catalog-core": ["packages/catalog-core/src/index.ts"],
+      "@nexo/catalog-core/*": ["packages/catalog-core/src/*"],
+      "@nexo/telemetry": ["packages/telemetry/src/index.ts"],
+      "@nexo/telemetry/*": ["packages/telemetry/src/*"]
+    }
+  }
+}

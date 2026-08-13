@@ -1,0 +1,33 @@
+{
+  "realm": "nexo",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      { "name": "user" },
+      { "name": "administrator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "nexo-web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "local-dev-secret",
+      "redirectUris": ["http://localhost:3000/auth/callback"],
+      "webOrigins": ["http://localhost:3000"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "user",
+      "enabled": true,
+      "firstName": "Nexo",
+      "lastName": "User",
+      "credentials": [{ "type": "password", "value": "nexo-local", "temporary": false }],
+      "realmRoles": ["user"]
+    }
+  ]
+}

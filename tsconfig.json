@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/catalog-core" },
+    { "path": "packages/catalog-import" },
+    { "path": "packages/telemetry" },
+    { "path": "apps/mcp" },
+    { "path": "apps/api" }
+  ]
+}

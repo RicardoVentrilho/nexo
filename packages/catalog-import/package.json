@@ -1,0 +1,17 @@
+{
+  "name": "@nexo/catalog-import",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "nexo-import": "./src/cli.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "pg": "^8.13.1"
+  }
+}

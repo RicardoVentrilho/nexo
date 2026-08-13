@@ -1,0 +1,14 @@
+node_modules/
+.git/
+Dockerfile*
+.dockerignore
+*.log*
+.env*
+coverage/
+.next/
+dist/
+build/
+.data/
+*.sqlite
+FotoProd/
+Figuras/

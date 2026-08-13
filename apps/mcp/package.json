@@ -1,0 +1,19 @@
+{
+  "name": "@nexo/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.1",
+    "@nexo/catalog-core": "workspace:*",
+    "@nexo/contracts": "workspace:*",
+    "@nexo/telemetry": "workspace:*",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  }
+}
