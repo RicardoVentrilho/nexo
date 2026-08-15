@@ -1,26 +1,37 @@
-function targetUrl(request: Request, path: string[]): URL {
+import { buildKeycloakTargetUrls } from "../../../slices/identity/keycloakProxy";
+
+function targetUrls(request: Request, path: string[]): URL[] {
   const internalOrigin = process.env.KEYCLOAK_INTERNAL_ORIGIN ?? "http://keycloak:8080";
-  const url = new URL(request.url);
-  const target = new URL(`${internalOrigin}/${path.join("/")}`);
-  target.search = url.search;
-  return target;
+  return buildKeycloakTargetUrls({
+    internalOrigin,
+    localOrigin: process.env.KEYCLOAK_LOCAL_ORIGIN ?? "http://localhost:8081",
+    path,
+    requestUrl: request.url
+  });
 }
 
 async function proxy(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
-  const init: RequestInit = {
-    method: request.method,
-    headers: request.headers,
-    redirect: "manual"
-  };
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = await request.arrayBuffer();
+  const body = request.method !== "GET" && request.method !== "HEAD" ? await request.arrayBuffer() : undefined;
+  let lastError: unknown;
+  for (const url of targetUrls(request, path)) {
+    const init: RequestInit = {
+      method: request.method,
+      headers: request.headers,
+      redirect: "manual"
+    };
+    if (body) init.body = body.slice(0);
+    try {
+      const response = await fetch(url, init);
+      return new Response(response.body, {
+        status: response.status,
+        headers: response.headers
+      });
+    } catch (error) {
+      lastError = error;
+    }
   }
-  const response = await fetch(targetUrl(request, path), init);
-  return new Response(response.body, {
-    status: response.status,
-    headers: response.headers
-  });
+  throw lastError;
 }
 
 export const GET = proxy;

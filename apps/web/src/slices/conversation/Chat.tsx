@@ -51,7 +51,7 @@ export function Chat() {
           <p className="text-sm text-muted-foreground">Catalogo de pecas autenticado</p>
         </div>
         <Button onClick={() => window.location.assign("/auth/login")} type="button" variant="outline">
-          <LogIn className="mr-2 h-4 w-4" />
+          <LogIn data-icon="inline-start" />
           Entrar
         </Button>
       </header>
@@ -95,7 +95,7 @@ export function Chat() {
       >
         <Textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Descreva o veiculo e a peca" />
         <Button aria-label="Enviar" disabled={pending} size="icon" type="submit">
-          <Send className="h-4 w-4" />
+          <Send data-icon="inline-start" />
         </Button>
       </form>
     </main>
@@ -109,7 +109,7 @@ function QuestionPanel({ disabled, onAnswer, question }: { disabled: boolean; on
         <div className="flex flex-wrap gap-2">
           {question.options.map((option) => (
             <Button disabled={disabled} key={option.value} onClick={() => onAnswer(option.value)} type="button" variant="outline">
-              <Check className="mr-2 h-4 w-4" />
+              <Check data-icon="inline-start" />
               {option.label}
             </Button>
           ))}
@@ -117,7 +117,7 @@ function QuestionPanel({ disabled, onAnswer, question }: { disabled: boolean; on
       ) : null}
       {question.skippable ? (
         <Button disabled={disabled} onClick={() => onAnswer("nao sei")} type="button" variant="ghost">
-          <SkipForward className="mr-2 h-4 w-4" />
+          <SkipForward data-icon="inline-start" />
           Nao sei
         </Button>
       ) : null}
@@ -133,7 +133,7 @@ function AuthRequiredPanel() {
         <p className="text-muted-foreground">A conversa usa dados protegidos e precisa de uma sessao autenticada.</p>
       </div>
       <Button className="w-full sm:w-auto" onClick={() => window.location.assign("/auth/login")} type="button">
-        <LogIn className="mr-2 h-4 w-4" />
+        <LogIn data-icon="inline-start" />
         Entrar
       </Button>
     </Alert>
